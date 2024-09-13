@@ -26,47 +26,6 @@ void backspace(char* cli_buffer, int* index) {
     uart_sendc(BACKSPACE);           // Send backspace character
 }
 
-// Function to handle tab completion
-void TAB(char* cli_buffer, int* index) {
-    int last_space_index = -1;
-
-    // Find the last space in the command
-    for (int i = 0; i < *index; i++) {
-        if (cli_buffer[i] == ' ') {
-            last_space_index = i;
-        }
-    }
-
-    char* partial_input = (last_space_index == -1) ? cli_buffer : (cli_buffer + last_space_index + 1);
-    int input_len = *index - (last_space_index + 1);
-    const char* matched_command = NULL;
-    int matched_count = 0;
-
-    // Search for matching commands
-    for (int i = 0; i < NUM_COMMANDS; i++) {
-        if (strncmp(commands[i], partial_input, input_len) == 0) {
-            matched_count++;
-            if (matched_count == 1) {
-                matched_command = commands[i];
-            } else {
-                uart_puts("\nAmbiguous command, type more characters.\n");
-                return;
-            }
-        }
-    }
-
-    // If exactly one match is found, autocomplete
-    if (matched_count == 1) {
-        clear_line();
-        cli_buffer[last_space_index + 1] = '\0';           // Clear the part after the last space
-        strcpy(cli_buffer + last_space_index + 1, matched_command); // Append matched command
-        *index = last_space_index + 1 + strlen(matched_command);    // Update index
-        uart_puts(cli_buffer);                             // Display the autocompleted command
-    } else if (matched_count == 0) {
-        uart_puts("\nNo matches found.\n");
-    }
-}
-
 // Function to clear the CLI line
 void clear_cli_line(char* cli_buffer, int* index) {
     while (*index > 0) {
@@ -107,6 +66,47 @@ void remove_whitespace(char* str) {
         str[j++] = str[i];
     }
     str[j] = '\0';
+}
+
+// Function for auto completion
+void TAB(char* cli_buffer, int* index) {
+    int last_space_index = -1;
+
+    // Find the last space in the command
+    for (int i = 0; i < *index; i++) {
+        if (cli_buffer[i] == ' ') {
+            last_space_index = i;
+        }
+    }
+
+    char* partial_input = (last_space_index == -1) ? cli_buffer : (cli_buffer + last_space_index + 1);
+    int input_len = *index - (last_space_index + 1);
+    const char* matched_command = NULL;
+    int matched_count = 0;
+
+    // Search for matching commands
+    for (int i = 0; i < NUM_COMMANDS; i++) {
+        if (strncmp(commands[i], partial_input, input_len) == 0) {
+            matched_count++;
+            if (matched_count == 1) {
+                matched_command = commands[i];
+            } else {
+                uart_puts("\nAmbiguous command, type more characters.\n");
+                return;
+            }
+        }
+    }
+
+    // If exactly one match is found, autocomplete
+    if (matched_count == 1) {
+        clear_line();
+        cli_buffer[last_space_index + 1] = '\0';           // Clear the part after the last space
+        strcpy(cli_buffer + last_space_index + 1, matched_command); // Append matched command
+        *index = last_space_index + 1 + strlen(matched_command);    // Update index
+        uart_puts(cli_buffer);                             // Display the autocompleted command
+    } else if (matched_count == 0) {
+        uart_puts("\nNo matches found.\n");
+    }
 }
 
 // Function to show board revision and MAC address
@@ -158,6 +158,27 @@ void showInfo(){
     }
 }
 
+// Function to handle the baudrate input by
+void handle_baudrate_command(const char *args) {
+    int baudrate = str_to_int(args); // Convert string args to integer
+    if (baudrate == 9600 || baudrate == 19200 || baudrate == 38400 ||
+        baudrate == 57600 || baudrate == 115200) {
+        set_baudrate(baudrate);
+    } else {
+        uart_puts("Invalid baud rate. Supported rates: 9600, 19200, 38400, 57600, 115200.\n");
+    }
+}
+
+// Function to handle the stopbit command
+void handle_stopbit_command(const char* args) {
+    int stop_bits = str_to_int(args); // Convert the argument to an integer
+    if (stop_bits == 1 || stop_bits == 2) {
+        set_stopbit(stop_bits);
+    } else {
+        uart_puts("Invalid stop bit setting. Use 1 or 2.\n");
+    }
+}
+
 // Function to execute commands
 void execute_command(char* cli_buffer) {
     // Check for specific 'help' command
@@ -168,16 +189,16 @@ void execute_command(char* cli_buffer) {
             uart_puts("help - Show brief information of all commands\n");
             uart_puts("clear - Clear screen\n");
             uart_puts("showinfo - Show board revision and MAC address\n");
-            uart_puts("baudrate - Change the baudrate\n");
+            uart_puts("baudrate <baudrate>- Change the baudrate\n");
             uart_puts("stopbit - Change the stopbit setting\n");
         } else if (strncmp(command_name, "clear", strlen("clear")) == 0) {
             uart_puts("clear - Clear the terminal screen.\n");
         } else if (strncmp(command_name, "showinfo", strlen("showinfo")) == 0) {
             uart_puts("showinfo - Show board revision and MAC address.\n");
         } else if (strncmp(command_name, "baudrate", strlen("baudrate")) == 0) {
-            uart_puts("baudrate - Change the baud rate of UART.\n");
+            uart_puts("baudrate <baudrate>- Change the baud rate of UART.\n");
         } else if (strncmp(command_name, "stopbit", strlen("stopbit")) == 0) {
-            uart_puts("stopbit - Change the stop bit setting of UART.\n");
+            uart_puts("stopbit <1|2> - Set UART stop bits to 1 or 2.\n");
         } else {
             uart_puts("Unknown command for help. Type 'help' for a list of commands.\n");
         }
@@ -188,8 +209,8 @@ void execute_command(char* cli_buffer) {
         uart_puts("help <command_name> - Show full information of a specific command\n");
         uart_puts("clear - Clear screen\n");
         uart_puts("showinfo - Show board revision and MAC address\n");
-        uart_puts("baudrate - Change the baudrate\n");
-        uart_puts("stopbit - Change the stopbit setting\n");
+        uart_puts("baudrate <baudrate>- Change the baudrate\n");
+        uart_puts("stopbit <1|2> - Set UART stop bits to 1 or 2.\n");
     } else if (strncmp(cli_buffer, "clear", strlen("clear")) == 0) {
         uart_puts("\033[2J");  // Clear screen ANSI escape code
         uart_puts("\033[H");   // Move cursor to home position
@@ -198,26 +219,9 @@ void execute_command(char* cli_buffer) {
     } else if (strncmp(cli_buffer, "baudrate", strlen("baudrate")) == 0) {
         handle_baudrate_command(cli_buffer + 9); // Handle baudrate command
     } else if (strncmp(cli_buffer, "stopbit", strlen("stopbit")) == 0) {
-        uart_puts("Setting stopbit...\n");
+        handle_stopbit_command(cli_buffer + 8); // Handle the stopbit command
     } else {
         uart_puts("Unknown command. Type 'help' for a list of commands.\n");
     }
 }
 
-void set_baudrate(int baudrate) {
-    unsigned int baud_reg_value = (250000000 / (baudrate * 8)) - 1;  // Assuming a clock of 250MHz
-    AUX_MU_BAUD = baud_reg_value;
-    uart_puts("Baud rate set to ");
-    uart_dec(baudrate);
-    uart_puts(" bps\n");
-}
-
-void handle_baudrate_command(const char *args) {
-    int baudrate = str_to_int(args); // Convert string args to integer
-    if (baudrate == 9600 || baudrate == 19200 || baudrate == 38400 ||
-        baudrate == 57600 || baudrate == 115200) {
-        set_baudrate(baudrate);
-    } else {
-        uart_puts("Invalid baud rate. Supported rates: 9600, 19200, 38400, 57600, 115200.\n");
-    }
-}

@@ -36,6 +36,29 @@ void uart_init() {
     uart_puts("\n");
 }
 
+// Function to set baudrate
+void set_baudrate(int baudrate) {
+    unsigned int baud_reg_value = (250000000 / (baudrate * 8)) - 1;  // Assuming a clock of 250MHz
+    AUX_MU_BAUD = baud_reg_value;
+    uart_puts("Baud rate set to ");
+    uart_dec(baudrate);
+    uart_puts(" bps\n");
+}
+
+// Function to set stop bit
+void set_stopbit(int stop_bits) {
+    if (stop_bits == 1) {
+        // Clear the stop bit field (assuming bit 2 in AUX_MU_LCR controls stop bit)
+        AUX_MU_LCR &= ~(1 << 2);
+        uart_puts("Stop bit set to 1\n");
+    } else if (stop_bits == 2) {
+        // Set the stop bit field
+        AUX_MU_LCR |= (1 << 2);
+        uart_puts("Stop bit set to 2\n");
+    } else {
+        uart_puts("Invalid stop bit setting. Use 1 or 2.\n");
+    }
+}
 
 /**
  * Send a character
