@@ -28,9 +28,11 @@ To set up and run the project, follow these steps:
 1. **Clone the Repository**
  
 ```git clone <repository-url>```
+
 2. **Navigate to Project Directory Open PowerShell or a terminal and use the following command to go to the project directory:**
 
 ```cd <location-of-the-file>```
+
 3. **Build the Project Compile the project using the make command:**
 
 ```make```
