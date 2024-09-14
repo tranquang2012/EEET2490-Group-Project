@@ -17,9 +17,7 @@ Group Assignment is a project focused on developing an operating system with a c
 - **Video Display**: Shows a short video (e.g., RMIT campus scene) on the screen.
 
 ### Game - Sokuban
-- **Colorful Game**: Implements a Sokuban game with at least one stage, and optionally additional stages.
-- **Game Controls**: Communicates with the CLI terminal for game control, providing ACK/NAK responses.
-- **Data Logging**: Logs interactions, including the number of commands received and other useful data.
+nothing yet
 
 ## Installation
 
