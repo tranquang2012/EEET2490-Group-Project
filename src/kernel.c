@@ -126,10 +126,8 @@ void cli() {
     }
 }
 
-
 void main() {
-    // Initialize system
-    
+
     uart_init();
     display_welcome_message();
     uart_puts("\nMyOS>: ");
