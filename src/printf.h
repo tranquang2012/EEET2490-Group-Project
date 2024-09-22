@@ -26,5 +26,5 @@ void ftoa(double n, char* res, int afterpoint);
 void argument_check_sub_specfier(char* description, int* width, int* precision, int* flag_zero, int* flag_zero_pre);
 
 
-void printf(char *string,...);
+void printf(const char *string,...);
 

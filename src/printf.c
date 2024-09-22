@@ -164,7 +164,7 @@ void argument_check_sub_specfier(char* argument_string, int* width, int* precisi
 }
 
 // %d %c %s %f %x %%, 0 flag, width, and precision
-void printf(char *string,...) {
+void printf(const char *string,...) {
 
     va_list ap;
     va_start(ap, string);

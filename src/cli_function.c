@@ -5,9 +5,10 @@
 #include "cli_function.h"
 #include "function.h"
 #include "mbox.h"
+#include "string.h"
 
-#define BACKSPACE '\b'      // ASCII backspace character
-#define EMPTY_CHAR ' '      // ASCII space character
+// #define BACKSPACE '\b'       // ASCII backspace character
+// #define EMPTY_CHAR ' '      // ASCII space character
 
 static const char* commands[] = { "help", "clear", "showinfo", "baudrate", "stopbit" };
 #define NUM_COMMANDS (sizeof(commands) / sizeof(commands[0]))

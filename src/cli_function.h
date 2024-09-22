@@ -17,4 +17,8 @@ void remove_whitespace(char *str);
 // Function to execute commands
 void execute_command(char* cli_buffer);
 
+int str_to_int(const char *str);
+void set_baudrate(int baudrate);
+void set_stopbit(int stop_bits);
+
 #endif // CLI_FUNCTION_H

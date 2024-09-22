@@ -42,3 +42,10 @@ void instruction_screen_display();
 void reset_levels();
 void end_screen_display();
 void displayRestartMessage();
+void TAB(char *buffer, int *index);  // Assuming function is defined somewhere in the project.
+void record_buffer(char *dest, const char *src, int *index);
+void uart_delete();  // Function that updates terminal display.
+void copy_cli_buffer(char *dest, const char *src);
+void displayRestartText();  // This may be `displayRestartMessage` based on a previous suggestion.
+void drawSplitScreen(int height, int width, char *map);
+void drawStringCentered(int y, const char *str, int color, int size, int width);
