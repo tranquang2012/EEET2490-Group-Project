@@ -6,82 +6,49 @@
  */
 void uart_init() {
     unsigned int r;
-    AUX_ENABLE |= 1;   // Enable mini UART (UART1)
-    AUX_MU_CNTL = 0;   // Disable transmitter and receiver
-    AUX_MU_LCR = 3;    // 8 bits, 1 stop bit, no parity
-    AUX_MU_MCR = 0;    // Clear RTS (request to send)
-    AUX_MU_IER = 0;    // Disable interrupts
-    AUX_MU_IIR = 0xc6; // Enable and clear FIFOs
-    AUX_MU_BAUD = 270; // Configure 115200 baud
-
-    // GPIO pin configuration
+    /* initialize UART */
+    AUX_ENABLE |= 1;   // enable mini UART (UART1)
+    AUX_MU_CNTL = 0;   // stop transmitter and receiver
+    AUX_MU_LCR = 3;    // 8-bit mode (also enable bit 1 to be used for RBP3)
+    AUX_MU_MCR = 0;    // clear RTS (request to send)
+    AUX_MU_IER = 0;    // disable interrupts
+    AUX_MU_IIR = 0xc6; // enable and clear FIFOs
+    AUX_MU_BAUD = 270; // configure 115200 baud [system_clk_freq/(baud_rate*8) - 1]
+    /* map UART1 to GPIO pins 14 and 15 */
     r = GPFSEL1;
-    r &= ~((7 << 12) | (7 << 15)); // Clear bits 17-12
-    r |= (2 << 12) | (2 << 15);    // Set ALT5 for TXD1/RXD1
+    r &= ~((7 << 12) | (7 << 15)); // clear bits 17-12 (FSEL15, FSEL14)
+    r |= (2 << 12) | (2 << 15);    // set value 2 (select ALT5: TXD1/RXD1)
     GPFSEL1 = r;
-
-    // Enable GPIO pins
-    GPPUD = 0; // No pull-up/down
+    /* enable GPIO 14, 15 */
+    GPPUD = 0; // No pull up/down control
     r = 150;
-    while (r--) { asm volatile("nop"); }
-    GPPUDCLK0 = (1 << 14) | (1 << 15); // Enable clock for GPIO 14, 15
+    while (r--) {
+        asm volatile("nop");
+    }                                  // waiting 150 cycles
+    GPPUDCLK0 = (1 << 14) | (1 << 15); // enable clock for GPIO 14, 15
     r = 150;
-    while (r--) { asm volatile("nop"); }
-    GPPUDCLK0 = 0; // Flush GPIO setup
-
-    AUX_MU_CNTL = 3; // Enable transmitter and receiver
-
-    uart_puts("Initialized UART. LCR value: ");
-    uart_hex(AUX_MU_LCR);
-    uart_puts("\n");
+    while (r--) {
+        asm volatile("nop");
+    }                // waiting 150 cycles
+    GPPUDCLK0 = 0;   // flush GPIO setup
+    AUX_MU_CNTL = 3; // enable transmitter and receiver (Tx, Rx)
 }
 
-// Function to set baudrate
-void set_baudrate(int baudrate) {
-    unsigned int baud_reg_value = (250000000 / (baudrate * 8)) - 1;  // Assuming a clock of 250MHz
-    AUX_MU_BAUD = baud_reg_value;
-    uart_puts("Baud rate set to ");
-    uart_dec(baudrate);
-    uart_puts(" bps\n");
-}
-
-// Function to set stop bit
-void set_stopbit(int stop_bits) {
-    if (stop_bits == 1) {
-        // Clear the stop bit field (assuming bit 2 in AUX_MU_LCR controls stop bit)
-        AUX_MU_LCR &= ~(1 << 2);
-        uart_puts("Stop bit set to 1\n");
-    } else if (stop_bits == 2) {
-        // Set the stop bit field
-        AUX_MU_LCR |= (1 << 2);
-        uart_puts("Stop bit set to 2\n");
-    } else {
-        uart_puts("Invalid stop bit setting. Use 1 or 2.\n");
-    }
-}
-
-/**
- * Send a character
- */
-void uart_sendc(char c)
-{
+// Send a character
+void uart_sendc(char c) {
     // wait until transmitter is empty
-    do
-    {
+    do {
         asm volatile("nop");
     } while (!(AUX_MU_LSR & 0x20));
     // write the character to the buffer
     AUX_MU_IO = c;
 }
-/**
- * Receive a character
- */
-char uart_getc()
-{
+
+// Receive a character
+char new_uart_getc() {
     char c;
     // wait until data is ready (one symbol)
-    do
-    {
+    do {
         asm volatile("nop");
     } while (!(AUX_MU_LSR & 0x01));
     // read it and return
@@ -89,13 +56,24 @@ char uart_getc()
     // convert carriage return to newline character
     return (c == '\r' ? '\n' : c);
 }
-/**
- * Display a string
- */
-void uart_puts(char *s)
-{
-    while (*s)
-    {
+
+
+// Receive character without it showing on the terminal
+char uart_getc() {
+    // check if data is ready
+    if (!(AUX_MU_LSR & 0x01)) {
+        // if not, return a special value (e.g., 0)
+        return -1;
+    }
+    // read it and return
+    char c = (unsigned char)(AUX_MU_IO);
+    // convert carriage return to newline character
+    return (c == '\r' ? '\n' : c);
+}
+
+// Display a string
+void uart_puts(char *s) {
+    while (*s) {
         // convert newline to carriage return + newline
         if (*s == '\n')
             uart_sendc('\r');
@@ -103,14 +81,10 @@ void uart_puts(char *s)
     }
 }
 
-/**
- * Display a value in hexadecimal format
- */
-void uart_hex(unsigned int num)
-{
+// Display a value in hexadecimal format
+void uart_hex(unsigned int num) {
     uart_puts("0x");
-    for (int pos = 28; pos >= 0; pos = pos - 4)
-    {
+    for (int pos = 28; pos >= 0; pos = pos - 4) {
         // Get highest 4-bit nibble
         char digit = (num >> pos) & 0xF;
         /* Convert to ASCII code */
@@ -119,24 +93,20 @@ void uart_hex(unsigned int num)
         uart_sendc(digit);
     }
 }
-/**
- * Display a value in decimal format
- */
-void uart_dec(int num)
-{
+
+// Display a value in decimal format
+void uart_dec(int num) {
     // A string to store the digit characters
     char str[33] = "";
     // Calculate the number of digits
     int len = 1;
     int temp = num;
-    while (temp >= 10)
-    {
+    while (temp >= 10) {
         len++;
         temp = temp / 10;
     }
     // Store into the string and print out
-    for (int i = 0; i < len; i++)
-    {
+    for (int i = 0; i < len; i++) {
         int digit = num % 10; // get last digit
         num = num / 10;       // remove last digit from the number
         str[len - (i + 1)] = digit + '0';
@@ -152,59 +122,4 @@ void uart_delete() {
     uart_puts(" ");
     // Move the cursor back again
     uart_puts("\b");
-}
-
-/**
- * Get a character with if
- */
-char uart_get_char()
-{
-    char c;
-    if (!(AUX_MU_LSR & 0x01))
-        asm volatile("nop");
-
-    /* read it and return */
-    c = (char)(AUX_MU_IO);
-
-    /* convert carriage return to newline */
-    return (c == '\r' ? '\n' : c);
-}
-
-/**
- * Receive a character
- */
-char uart_getc_game() {
-    char c;
-	 /* wait until data is ready (one symbol) */
-	 int i = 0;
-	 int total_time = 1000000;
-	 do {
-		 asm volatile("nop");
-		 i++;
-		 if(i == total_time){
-			 return '\0';
-		 }
-	 } while ( !(AUX_MU_LSR & 0x01) ); // - bit 1 FIFO hold at least 1 symbol
-	 /* read it and return */
-	 c = (char)(AUX_MU_IO); // - read from FIFO as char
-	 /* convert carriage return to newline */
-	 return (c == '\r' ? '\n' : c); // - check for carriage return if yes change it to Enter
-
-}
-
-/* Function to wait for some msec: the program will stop there */
-void wait_msec(unsigned int n)
-{
-    register unsigned long f, t, r, expiredTime;
-    // Get the current counter frequency (Hz)
-    asm volatile ("mrs %0, cntfrq_el0" : "=r"(f));
-    
-    // Read the current counter value
-    asm volatile ("mrs %0, cntpct_el0" : "=r"(t));
-    
-    // Calculate expire value for counter
-    expiredTime = t + ( (f/1000)*n )/1000;
-    do {
-     asm volatile ("mrs %0, cntpct_el0" : "=r"(r));
-    } while(r < expiredTime);
 }

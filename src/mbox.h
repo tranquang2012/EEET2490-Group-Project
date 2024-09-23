@@ -1,10 +1,9 @@
 #include "gpio.h"
-
 /* a properly aligned buffer */
 extern volatile unsigned int mBuf[36];
 #define ADDR(X) (unsigned int)((unsigned long)X)
 
-/* Registers */
+// Registers
 #define VIDEOCORE_MBOX (MMIO_BASE + 0x0000B880)
 #define MBOX0_READ (*(volatile unsigned int *)(VIDEOCORE_MBOX + 0x00))
 #define MBOX0_PEEK (*(volatile unsigned int *)(VIDEOCORE_MBOX + 0x10))
@@ -19,13 +18,14 @@ extern volatile unsigned int mBuf[36];
 
 // Request/Response code in Buffer content
 #define MBOX_RESPONSE 0x80000000
+
 #define MBOX_REQUEST 0
 
 // Status Value (from Status Register)
 #define MBOX_FULL 0x80000000
 #define MBOX_EMPTY 0x40000000
 
-/* channels */
+// Channels
 #define MBOX_CH_POWER 0 // Power management
 #define MBOX_CH_FB 1    // Frame buffer
 #define MBOX_CH_VUART 2 // Virtual UART
@@ -35,12 +35,20 @@ extern volatile unsigned int mBuf[36];
 #define MBOX_CH_TOUCH 6 // Touch screen
 #define MBOX_CH_PROP 8  // Property tags (ARM -> VC)
 
-/* tags */
-#define MBOX_TAG_GETSERIAL 0x00010004 // Get board serial
-#define MBOX_TAG_GETMODEL 0x00010001  // Get board model
+// Tags
+#define MBOX_TAG_GETSERIAL 0x00010004           // Get board serial
+#define MBOX_TAG_GETMODEL 0x00010001            // Get board model
+#define MBOX_TAG_GETREVISION 0x00010002         // Get board revision
+#define MBOX_TAG_GETMACADDRESS 0x00010003       // Get board MAC address
+#define MBOX_TAG_GETFIRMWAREREVISION 0x00000001 // Get firmware revision
+#define MBOX_TAG_GETUARTCLOCKRATE 0x00010007    // Get UART clock rate
 #define MBOX_TAG_SETCLKRATE 0x00038002
+#define MBOX_TAG_LAST 0
 
-//New Tags for Screen Display
+// Function Prototypes
+int mbox_call(unsigned int buffer_addr, unsigned char channel);
+
+// New Tags for Screen Display
 #define MBOX_TAG_SETPHYWH 0x48003
 #define MBOX_TAG_SETVIRTWH 0x48004
 #define MBOX_TAG_SETVIRTOFF 0x48009
@@ -48,13 +56,3 @@ extern volatile unsigned int mBuf[36];
 #define MBOX_TAG_SETPXLORDR 0x48006
 #define MBOX_TAG_GETFB 0x40001
 #define MBOX_TAG_GETPITCH 0x40008
-
-#define MBOX_TAG_LAST 0
-
-/* Function Prototypes */
-int mbox_call(unsigned int buffer_addr, unsigned char channel);
-
-void uart_hex(unsigned int d);
-void uart_dec(int num);
-void mbox_buffer_setup(unsigned int buffer_addr, unsigned int tag_identifier, unsigned int **res_data, unsigned int req_length, unsigned int res_length, ...);
-
