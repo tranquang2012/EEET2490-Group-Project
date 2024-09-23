@@ -50,11 +50,5 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
-src/video.h
-src/picture.h
-Makefile
-kernel8.img
-src/sprite.h
-src/welcome_screen.h
-src/instruction_screen.h
-src/game_background.h
+
+

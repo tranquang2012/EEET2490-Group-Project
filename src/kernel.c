@@ -385,9 +385,7 @@ void cli() {
     }
 }
 
-
 void main() {
-
     uart_init();
     display_welcome_message();
     uart_puts("\nMyOS>: ");
