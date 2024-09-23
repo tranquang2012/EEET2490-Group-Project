@@ -701,6 +701,9 @@ void drawSplitScreen(int rows, int cols, int map[MAX_WIDTH][MAX_HEIGHT]) {
             case BLOCK:
                 uart_puts("B");
                 break;
+            case WATER:
+                uart_puts("W");
+                break;    
             case SUCCESS_BLOCK:
                 uart_puts("*");
                 break;
