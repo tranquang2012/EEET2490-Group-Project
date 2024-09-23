@@ -1,15 +1,16 @@
 #include "uart.h"
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include "cli_function.h"
 #include "function.h"
 #include "mbox.h"
 
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
+
 #define BACKSPACE '\b'      // ASCII backspace character
 #define EMPTY_CHAR ' '      // ASCII space character
 
-static const char* commands[] = { "help", "clear", "showinfo", "baudrate", "stopbit" };
+static const char* commands[] = { "help", "clear", "showinfo", "baudrate", "stopbit", "game" };
 #define NUM_COMMANDS (sizeof(commands) / sizeof(commands[0]))
 
 // Clear the line in the terminal and reset the cursor
@@ -191,6 +192,7 @@ void execute_command(char* cli_buffer) {
             uart_puts("showinfo - Show board revision and MAC address\n");
             uart_puts("baudrate <baudrate>- Change the baudrate\n");
             uart_puts("stopbit - Change the stopbit setting\n");
+            uart_puts("game - Play game\n");
         } else if (strncmp(command_name, "clear", strlen("clear")) == 0) {
             uart_puts("clear - Clear the terminal screen.\n");
         } else if (strncmp(command_name, "showinfo", strlen("showinfo")) == 0) {
@@ -199,6 +201,8 @@ void execute_command(char* cli_buffer) {
             uart_puts("baudrate <baudrate>- Change the baud rate of UART.\n");
         } else if (strncmp(command_name, "stopbit", strlen("stopbit")) == 0) {
             uart_puts("stopbit <1|2> - Set UART stop bits to 1 or 2.\n");
+        } else if (strncmp(command_name, "game", strlen("game")) == 0) {
+            uart_puts("game - play game\n");
         } else {
             uart_puts("Unknown command for help. Type 'help' for a list of commands.\n");
         }
@@ -211,6 +215,7 @@ void execute_command(char* cli_buffer) {
         uart_puts("showinfo - Show board revision and MAC address\n");
         uart_puts("baudrate <baudrate>- Change the baudrate\n");
         uart_puts("stopbit <1|2> - Set UART stop bits to 1 or 2.\n");
+        uart_puts("game - Play game\n");
     } else if (strncmp(cli_buffer, "clear", strlen("clear")) == 0) {
         uart_puts("\033[2J");  // Clear screen ANSI escape code
         uart_puts("\033[H");   // Move cursor to home position
@@ -220,8 +225,33 @@ void execute_command(char* cli_buffer) {
         handle_baudrate_command(cli_buffer + 9); // Handle baudrate command
     } else if (strncmp(cli_buffer, "stopbit", strlen("stopbit")) == 0) {
         handle_stopbit_command(cli_buffer + 8); // Handle the stopbit command
+    } else if (strncmp(cli_buffer, "game", strlen("game")) == 0) {
+        main_game();  // Call the actual showInfo function
     } else {
         uart_puts("Unknown command. Type 'help' for a list of commands.\n");
     }
 }
 
+// Function to set baudrate
+void set_baudrate(int baudrate) {
+    unsigned int baud_reg_value = (250000000 / (baudrate * 8)) - 1;  // Assuming a clock of 250MHz
+    AUX_MU_BAUD = baud_reg_value;
+    uart_puts("Baud rate set to ");
+    uart_dec(baudrate);
+    uart_puts(" bps\n");
+}
+
+// Function to set stop bit
+void set_stopbit(int stop_bits) {
+    if (stop_bits == 1) {
+        // Clear the stop bit field (assuming bit 2 in AUX_MU_LCR controls stop bit)
+        AUX_MU_LCR &= ~(1 << 2);
+        uart_puts("Stop bit set to 1\n");
+    } else if (stop_bits == 2) {
+        // Set the stop bit field
+        AUX_MU_LCR |= (1 << 2);
+        uart_puts("Stop bit set to 2\n");
+    } else {
+        uart_puts("Invalid stop bit setting. Use 1 or 2.\n");
+    }
+}
