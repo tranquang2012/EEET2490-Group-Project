@@ -1,7 +1,7 @@
 #include "timer.h"
 #include "uart.h"
 #include "video.h"
-#include "welcome_screen.h"
+
 
 #define SCREEN_WIDTH 1280
 #define SCREEN_HEIGHT 720
@@ -32,8 +32,8 @@ int video_x = (SCREEN_WIDTH - VIDEO_WIDTH) / 2;
 int video_y = (SCREEN_HEIGHT - VIDEO_HEIGHT) / 2;
 
 // Current position of the top-left corner of the welcome screen
-int welcome_x = (SCREEN_WIDTH - WELCOME_WIDTH) / 2;
-int welcome_y = (SCREEN_HEIGHT - WELCOME_HEIGHT) / 2;
+// int welcome_x = (SCREEN_WIDTH - WELCOME_WIDTH) / 2;
+// int welcome_y = (SCREEN_HEIGHT - WELCOME_HEIGHT) / 2;
 
 int current_frame = 0; // Keep track of current frame
 
@@ -43,10 +43,7 @@ void handle_timer_1() {
         current_frame = (current_frame + 1) % epd_bitmap_allArray_LEN;
         // Draw the current frame of the video
         drawImage(video_x, video_y, epd_bitmap_allArray[current_frame], VIDEO_WIDTH, VIDEO_HEIGHT);
-    } else if (state == 2 && is_welcome_screen == 1) {
-        // Draw the current frame of the video
-        drawImage(welcome_x, welcome_y, epd_bitmap_game_background, WELCOME_WIDTH, WELCOME_HEIGHT);
-    }
+    } 
 
     cur_val_1 += interval_1;
     SYSTEM_TIMER_C1 = cur_val_1;

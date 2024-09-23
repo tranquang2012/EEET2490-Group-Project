@@ -193,6 +193,7 @@ void execute_command(char* cli_buffer) {
             uart_puts("baudrate <baudrate>- Change the baudrate\n");
             uart_puts("stopbit - Change the stopbit setting\n");
             uart_puts("game - Play game\n");
+            uart_puts("picvid - display picture and video\n");
         } else if (strncmp(command_name, "clear", strlen("clear")) == 0) {
             uart_puts("clear - Clear the terminal screen.\n");
         } else if (strncmp(command_name, "showinfo", strlen("showinfo")) == 0) {
@@ -203,7 +204,9 @@ void execute_command(char* cli_buffer) {
             uart_puts("stopbit <1|2> - Set UART stop bits to 1 or 2.\n");
         } else if (strncmp(command_name, "game", strlen("game")) == 0) {
             uart_puts("game - play game\n");
-        } else {
+        }else if (strncmp(command_name, "picvid", strlen("picvid")) == 0) {
+            uart_puts("picvid - display picture and video\n");
+        }else {
             uart_puts("Unknown command for help. Type 'help' for a list of commands.\n");
         }
     } else if (strncmp(cli_buffer, "help", strlen("help")) == 0) {
@@ -216,6 +219,7 @@ void execute_command(char* cli_buffer) {
         uart_puts("baudrate <baudrate>- Change the baudrate\n");
         uart_puts("stopbit <1|2> - Set UART stop bits to 1 or 2.\n");
         uart_puts("game - Play game\n");
+        uart_puts("picvid - display picture and video\n");
     } else if (strncmp(cli_buffer, "clear", strlen("clear")) == 0) {
         uart_puts("\033[2J");  // Clear screen ANSI escape code
         uart_puts("\033[H");   // Move cursor to home position
@@ -227,6 +231,8 @@ void execute_command(char* cli_buffer) {
         handle_stopbit_command(cli_buffer + 8); // Handle the stopbit command
     } else if (strncmp(cli_buffer, "game", strlen("game")) == 0) {
         main_game();  // Call the actual showInfo function
+    }else if (strncmp(cli_buffer, "picvid", strlen("picvid")) == 0) {
+        pic_display();
     } else {
         uart_puts("Unknown command. Type 'help' for a list of commands.\n");
     }
