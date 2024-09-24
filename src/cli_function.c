@@ -170,16 +170,6 @@ void handle_baudrate_command(const char *args) {
     }
 }
 
-// Function to handle the stopbit command
-void handle_stopbit_command(const char* args) {
-    int stop_bits = str_to_int(args); // Convert the argument to an integer
-    if (stop_bits == 1 || stop_bits == 2) {
-        set_stopbit(stop_bits);
-    } else {
-        uart_puts("Invalid stop bit setting. Use 1 or 2.\n");
-    }
-}
-
 // Function to execute commands
 void execute_command(char* cli_buffer) {
     // Check for specific 'help' command
@@ -228,9 +218,9 @@ void execute_command(char* cli_buffer) {
     } else if (strncmp(cli_buffer, "baudrate", strlen("baudrate")) == 0) {
         handle_baudrate_command(cli_buffer + 9); // Handle baudrate command
     } else if (strncmp(cli_buffer, "stopbit", strlen("stopbit")) == 0) {
-        handle_stopbit_command(cli_buffer + 8); // Handle the stopbit command
+        uart_puts("Unable to change stopbit due to usage of Mini UART");
     } else if (strncmp(cli_buffer, "game", strlen("game")) == 0) {
-        main_game();  // Call the actual showInfo function
+        main_game();  
     }else if (strncmp(cli_buffer, "picvid", strlen("picvid")) == 0) {
         pic_display();
     } else {
@@ -247,17 +237,3 @@ void set_baudrate(int baudrate) {
     uart_puts(" bps\n");
 }
 
-// Function to set stop bit
-void set_stopbit(int stop_bits) {
-    if (stop_bits == 1) {
-        // Clear the stop bit field (assuming bit 2 in AUX_MU_LCR controls stop bit)
-        AUX_MU_LCR &= ~(1 << 2);
-        uart_puts("Stop bit set to 1\n");
-    } else if (stop_bits == 2) {
-        // Set the stop bit field
-        AUX_MU_LCR |= (1 << 2);
-        uart_puts("Stop bit set to 2\n");
-    } else {
-        uart_puts("Invalid stop bit setting. Use 1 or 2.\n");
-    }
-}
