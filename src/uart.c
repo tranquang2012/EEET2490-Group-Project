@@ -1,4 +1,5 @@
 // -----------------------------------uart.c -------------------------------------
+#ifdef USE_UART1
 #include "uart.h"
 #include "gpio.h"
 /**
@@ -123,3 +124,12 @@ void uart_delete() {
     // Move the cursor back again
     uart_puts("\b");
 }
+// Function to set baudrate
+void set_baudrate(int baudrate) {
+    unsigned int baud_reg_value = (250000000 / (baudrate * 8)) - 1;  // Assuming a clock of 250MHz
+    AUX_MU_BAUD = baud_reg_value;
+    uart_puts("Baud rate set to ");
+    uart_dec(baudrate);
+    uart_puts(" bps\n");
+}
+#endif

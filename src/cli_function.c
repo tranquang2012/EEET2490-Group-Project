@@ -2,6 +2,8 @@
 #include "cli_function.h"
 #include "function.h"
 #include "mbox.h"
+#include "uart0.h"
+#include "util.h"
 
 #ifndef NULL
 #define NULL ((void *)0)
@@ -159,17 +161,6 @@ void showInfo(){
     }
 }
 
-// Function to handle the baudrate input by
-void handle_baudrate_command(const char *args) {
-    int baudrate = str_to_int(args); // Convert string args to integer
-    if (baudrate == 9600 || baudrate == 19200 || baudrate == 38400 ||
-        baudrate == 57600 || baudrate == 115200) {
-        set_baudrate(baudrate);
-    } else {
-        uart_puts("Invalid baud rate. Supported rates: 9600, 19200, 38400, 57600, 115200.\n");
-    }
-}
-
 // Function to execute commands
 void execute_command(char* cli_buffer) {
     // Check for specific 'help' command
@@ -213,12 +204,12 @@ void execute_command(char* cli_buffer) {
     } else if (strncmp(cli_buffer, "clear", strlen("clear")) == 0) {
         uart_puts("\033[2J");  // Clear screen ANSI escape code
         uart_puts("\033[H");   // Move cursor to home position
-    } else if (strncmp(cli_buffer, "showinfo", strlen("showinfo")) == 0) {
+    } else if (strncmp(cli_buffer, "showinfo", strlen("showinfo")) == 0){
         showInfo();  // Call the actual showInfo function
-    } else if (strncmp(cli_buffer, "baudrate", strlen("baudrate")) == 0) {
-        handle_baudrate_command(cli_buffer + 9); // Handle baudrate command
-    } else if (strncmp(cli_buffer, "stopbit", strlen("stopbit")) == 0) {
-        uart_puts("Unable to change stopbit due to usage of Mini UART");
+    }else if (strncmp(cli_buffer, "baudrate", 8) == 0) {
+        handle_baudrate_command(cli_buffer + 9);
+    }else if (strncmp(cli_buffer, "stopbit", 7) == 0) {
+        handle_stopbit_command(cli_buffer + 8);
     } else if (strncmp(cli_buffer, "game", strlen("game")) == 0) {
         main_game();  
     }else if (strncmp(cli_buffer, "picvid", strlen("picvid")) == 0) {
@@ -228,12 +219,34 @@ void execute_command(char* cli_buffer) {
     }
 }
 
-// Function to set baudrate
-void set_baudrate(int baudrate) {
-    unsigned int baud_reg_value = (250000000 / (baudrate * 8)) - 1;  // Assuming a clock of 250MHz
-    AUX_MU_BAUD = baud_reg_value;
-    uart_puts("Baud rate set to ");
-    uart_dec(baudrate);
-    uart_puts(" bps\n");
+#ifdef USE_UART0
+void handle_stopbit_command(const char *args) {
+    int stop_bits = str_to_int(args); // Convert string args to integer
+    
+    if (stop_bits == 1 || stop_bits == 2) {
+        uart0_set_stopbit(stop_bits);  // Set stop bits only for UART0
+    } else {
+        uart_puts("Invalid stop bit. Supported values: 1 or 2.\n");
+    }
+}
+#else
+void handle_stopbit_command(const char *args) {
+    uart_puts("Stop bit configuration not supported for Mini UART (UART1).\n");
+}
+#endif
+
+void handle_baudrate_command(const char *args) {
+    int baudrate = str_to_int(args); // Convert string args to integer
+    if (baudrate == 9600 || baudrate == 19200 || baudrate == 38400 ||
+        baudrate == 57600 || baudrate == 115200) {
+        
+        set_baudrate(baudrate);  // Set baudrate for Mini UART (uart.c)
+#ifdef USE_UART0
+        uart0_set_baudrate(baudrate); // Set baudrate for PL011 UART (uart0.c)
+#endif
+        
+    } else {
+        uart_puts("Invalid baud rate. Supported rates: 9600, 19200, 38400, 57600, 115200.\n");
+    }
 }
 

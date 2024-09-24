@@ -5,6 +5,7 @@ BUILD_DIR = ./obj
 # Source and object files
 CFILES = $(wildcard $(SRC_DIR)/*.c)
 OFILES = $(CFILES:$(SRC_DIR)/%.c=$(BUILD_DIR)/%.o)
+OFILES := $(filter-out $(BUILD_DIR)/uart.o $(BUILD_DIR)/uart0.o, $(OFILES)) # Exclude both by default
 
 # Raspberry Pi version
 RPI_VER = -DRPI_VERSION=3
@@ -12,29 +13,55 @@ RPI_VER = -DRPI_VERSION=3
 # Compiler flags
 GCCFLAGS = -Wall -O2 -ffreestanding -nostdinc -nostdlib $(RPI_VER)
 
-all: clean kernel8.img run
+# Default UART settings
+UART_FLAG = -DUSE_UART1
+UART_SOURCE = $(SRC_DIR)/uart.c
 
-RPI3:
-	make RPI_VER=-DRPI_VERSION=3 all
+# Phony targets
+.PHONY: all uart0 uart1 clean run
 
-RPI4:
-	make RPI_VER= all
+# Default target (builds with UART1)
+all: kernel8.img
 
+# Target for UART0 build
+uart0: UART_FLAG = -DUSE_UART0
+uart0: UART_SOURCE = $(SRC_DIR)/uart0.c
+uart0: kernel8.img
+
+# Target for UART1 build
+uart1: UART_FLAG = -DUSE_UART1
+uart1: UART_SOURCE = $(SRC_DIR)/uart.c
+uart1: kernel8.img
+
+# Object file compilation for boot.S
 $(BUILD_DIR)/boot.o: $(SRC_DIR)/boot.S
 	aarch64-none-elf-gcc $(GCCFLAGS) -c $(SRC_DIR)/boot.S -o $(BUILD_DIR)/boot.o
 
-$(BUILD_DIR)/uart.o: $(SRC_DIR)/uart.c
-	aarch64-none-elf-gcc $(GCCFLAGS) -c $(SRC_DIR)/uart.c -o $(BUILD_DIR)/uart.o
+# Compile selected UART file with UART_FLAG
+$(BUILD_DIR)/uart.o: $(UART_SOURCE)
+	aarch64-none-elf-gcc $(GCCFLAGS) $(UART_FLAG) -c $(UART_SOURCE) -o $(BUILD_DIR)/uart.o
 
+# General rule for all other object files
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
-	aarch64-none-elf-gcc $(GCCFLAGS) -c $< -o $@
+	aarch64-none-elf-gcc $(GCCFLAGS) $(UART_FLAG) -c $< -o $@
 
-kernel8.img: $(BUILD_DIR)/boot.o $(OFILES)
-	aarch64-none-elf-ld -nostdlib $(BUILD_DIR)/boot.o $(OFILES) -T $(SRC_DIR)/link.ld -o $(BUILD_DIR)/kernel8.elf
+# Linker script and kernel image generation
+kernel8.img: $(BUILD_DIR)/boot.o $(OFILES) $(BUILD_DIR)/uart.o
+	aarch64-none-elf-ld -nostdlib $(BUILD_DIR)/boot.o $(OFILES) $(BUILD_DIR)/uart.o -T $(SRC_DIR)/link.ld -o $(BUILD_DIR)/kernel8.elf
 	aarch64-none-elf-objcopy -O binary $(BUILD_DIR)/kernel8.elf kernel8.img
 
+# Clean the build directory and generated files
 clean:
-	del kernel8.elf .\obj\*.o *.img
+	del /f kernel8.elf $(subst /,\,$(BUILD_DIR))\*.o kernel8.img
 
+# Run QEMU with the kernel image
 run:
+	qemu-system-aarch64 -M raspi3 -kernel kernel8.img -serial null -serial stdio
+
+# Run QEMU with UART0
+uart0-run: uart0
+	qemu-system-aarch64 -M raspi3 -kernel kernel8.img -serial stdio
+
+# Run QEMU with UART1
+uart1-run: uart1
 	qemu-system-aarch64 -M raspi3 -kernel kernel8.img -serial null -serial stdio

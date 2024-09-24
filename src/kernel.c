@@ -6,6 +6,7 @@
 #include "mbox.h"
 #include "timer.h"
 #include "uart.h"
+#include "uart0.h"
 #include "util.h"
 #include "cli_function.h"
 
