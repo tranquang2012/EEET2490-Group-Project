@@ -114,9 +114,7 @@ void main_game(){
         }
 
         switch (state) {
-        case 0: // Image display
-
-                    //Display text
+        case 0: //Display text
                     drawStringCentered(50, "Group 8 - Members:", 0xFFFFFFFF, 2, width);
                     drawStringCentered(150, "Le Thanh Vinh - S3914997", 0xFFFF99CC, 2, width);
                     drawStringCentered(250, "Nguyen Bui Huy Hoang - S3914538", 0xFF99CCFF, 2, width);
@@ -277,19 +275,19 @@ void main_game(){
                             actualLevel++;                   // when the transtition is completed, this level will be displayed
 
                             // fill the background with Block
-                            for (int y = 0; y <= sprite_res * 10; y += sprite_res) {
-                                for (int x = 0; x <= sprite_res * 16; x += sprite_res) {
+                            for (int y = 0; y <= sprite_res * 16; y += sprite_res) {
+                                for (int x = 0; x <= sprite_res * 20; x += sprite_res) {
                                     drawImage(x, y, Block, sprite_res, sprite_res);
                                 }
                             }
 
                             // if the last level completed display you won
                             if (actualLevel == NUM_LEVELS - 1) {
-                                drawStringCentered(50, "!!! CONGRATS !!!", 0xFF00FF00, 5, width);
-                                drawStringCentered(150, "YOU WON", 0xFF00FF00, 2, width);
+                                drawStringCentered(50, "!!! CONGRATS !!!", 0xFFFFFFFF, 5, width);
+                                drawStringCentered(150, "YOU WON", 0xFFFFFFFF, 2, width);
                             } else { // display level completed
-                                drawStringCentered(50, "!!! CONGRATS !!!", 0xFF00FF00, 5, width);
-                                drawStringCentered(150, "LEVEL COMPLETED", 0xFF00FF00, 2, width);
+                                drawStringCentered(50, "!!! CONGRATS !!!", 0xFFFFFFFF, 5, width);
+                                drawStringCentered(150, "LEVEL COMPLETED", 0xFFFFFFFF, 2, width);
                             }
                             drawMap(levels[currentLevel].height, levels[currentLevel].width, levels[currentLevel].map, allArray, width, height);
                         }
@@ -530,7 +528,7 @@ void welcome_screen_display() {
 
         // Only process input if a character was received
         if (c != 0) {
-            if (c == '\n') { // "Enter" key to switch display
+            if (c == ' ') { // "Space" key to switch display
                 is_welcome_screen = 0;
                 drawRectARGB32(0, 0, 1920, 1080, 0xFF000000, 1); // Clear the screen
                 break;
@@ -554,7 +552,7 @@ void instruction_screen_display() {
     drawStringCentered(350, "Press 'd' to move Right", 0xFFFFFFFF, 2, width);
     drawStringCentered(400, "Press 'r' to restart the level", 0xFFFFFFFF, 2, width);
     drawStringCentered(450, "Press 'h' to see hint", 0xFFFFFFFF, 2, width);
-    drawStringCentered(560, "Press Enter to continue", 0xFFFFFFFF, 4, width);
+    drawStringCentered(560, "Press Space to continue", 0xFFFFFFFF, 4, width);
 
     // "Enter" key to switch display
     while (1) {
@@ -562,7 +560,7 @@ void instruction_screen_display() {
 
         // Only process input if a character was received
         if (c != 0) {
-            if (c == '\n') { // "Enter" key to switch display
+            if (c == ' ') { // "Space" key to switch display
                 drawRectARGB32(0, 0, 1920, 1080, 0xFF000000, 1); // Clear the screen
                 displayInstructionsinTerminal();                 // Start guiding the user to play the game
                 break;
@@ -594,15 +592,21 @@ void end_screen_display() {
         }
 
         // text is reprinted in the loop with the vertical position changes controlled by 'text_y' variable
-        drawStringCentered(text_y + 400, "Thanks for enjoying the game", 0xFB2943, 3, width);
-        drawStringCentered(text_y + 650, "Welcome Screen and instruction screen", 0x964B00, 2, width);
-        drawStringCentered(text_y + 950, "PRESS ENTER: MAIN MENU", 0xFF, 2, width);
+        drawStringCentered(text_y + 200, "EEET2490 - Embedded Systems:", 0x000000, 4, width);
+        drawStringCentered(text_y + 250, "Operating Systems & Interfacing ", 0x000000, 4, width);
+        drawStringCentered(text_y + 400, "Thanks for enjoying the game ", 0x000000, 3, width);
+        drawStringCentered(text_y + 450, "Our team:", 0x3333FF, 3, width);
+        drawStringCentered(text_y + 500, "Le Thanh Vinh - s3914997", 0xFFFFFF, 2, width);
+        drawStringCentered(text_y + 550, "Nguyen Bui Huy Hoang - s3914538", 0xFFFFFF, 2, width);
+        drawStringCentered(text_y + 600, "Hoang Nguyen Bao Duy - s3927196", 0xFFFFFF, 2, width);
+        drawStringCentered(text_y + 650, "Tran Quang - s3976073", 0xFFFFFF, 2, width);
+        drawStringCentered(text_y + 800, "PRESS SPACE: MAIN MENU", 0x000000, 1, width);
 
         // decrease each loop
         text_y -= 20;
 
         // draw the player Sprite
-        drawImage(x, 675, Player, sprite_res, sprite_res);
+        drawImage(x, 360, Player, sprite_res, sprite_res);
 
         // update position
         x += sprite_res;
@@ -611,21 +615,20 @@ void end_screen_display() {
         wait_msec(500);
 
         // redraw the background filled with grass/Emtpy again
-        for (int y = 0; y <= sprite_res * 11; y += sprite_res) {
-            for (int x = 0; x <= sprite_res * 16; x += sprite_res) {
+        for (int y = 0; y <= sprite_res * 16; y += sprite_res) {
+            for (int x = 0; x <= sprite_res * 20; x += sprite_res) {
                 drawImage(x, y, Wall, sprite_res, sprite_res);
             }
         }
 
-        // fill the previous position of player with grass
-        drawImage(x - sprite_res, 675, Empty, sprite_res, sprite_res);
+
 
         // draw a Block in front of a Player, since we add o delay so the Player will appear instantly after being deleted
-        drawImage(x + sprite_res, 675, Block, sprite_res, sprite_res);
+        drawImage(x + sprite_res, 360, Block, sprite_res, sprite_res);
 
         // Only prcess input if a character was received
         if (c != 0) {
-            if (c == '\n') { // "Enter" key to switch display
+            if (c == ' ') { // "Space" key to switch display
                 is_welcome_screen = 1;
 
                 // reset the text_y variable
